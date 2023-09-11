@@ -5,92 +5,113 @@
 #include <unistd.h>
 #include <math.h>
 
-#include "display.c"
-#include "utils.c"
-#include "matrix.c"
-#include "transforms.c"
-
-#define numels 4
+#include "./include/display.h"
+#include "./include/utils.h"
+#include "./include/transforms.h"
 
 #define MAXSHAPES 10
+#define PERSEPCTIVE_DISTANCE 10
 
 
-float projMat[4][4] = {{1,0,0,0},{0,1,0,0},{0,0,0,-0.1},{0,0,0,1}};
+float projMat[4][4] = {{1, 0, 0, 0},
+                       {0, 1, 0, 0},
+                       {0, 0, 0, -(1.0 / PERSEPCTIVE_DISTANCE)},
+                       {0, 0, 0, 1}};
 
-float * * * shapes = malloc(sizeof(float *)*MAXSHAPES);
-int numShapes = 0;
 
-void addShape(float mat[][4], float connectivity[][4])
-{
-    
-}
 
 int main(void)
 {
-    // matrices will be stored as groups of vertical vectors
-    float matB[numels][4] = {{1,0,9,1},{2,0,9,1},{1,1,9,1},{2,1,9,1}};
-
-    float connectivity[numels][4] = {{0,1,0,0},{0,0,0,1},{1,0,0,0},{0,0,1,0}};
-
-    float results[numels][4];
-
-    matMatMult(projMat, matB, results, numels);
-    scaleHomogenous(results, numels);
+    struct shape * shapes[MAXSHAPES];
+    int numShapes = 0;
 
 
-    int counter = 0;
+    struct location center = {1.5, 1.5, 8};
+
+
+    struct shape square1;
+    initShape(&square1);
+
+    addVertexToShape(&square1, (struct location){6, 5, 5});
+    addVertexToShape(&square1, (struct location){7, 5, 5});
+    addVertexToShape(&square1, (struct location){6, 6, 5});
+    addVertexToShape(&square1, (struct location){7, 6, 5});
+
+    addConnectionToShape(&square1, 0, 1);
+    addConnectionToShape(&square1, 1, 3);
+    addConnectionToShape(&square1, 2, 0);
+    addConnectionToShape(&square1, 3, 2);
+
+    struct shape square2;
+    initShape(&square2);
+
+    addVertexToShape(&square2, (struct location){8, 5, 5});
+    addVertexToShape(&square2, (struct location){9, 5, 5});
+    addVertexToShape(&square2, (struct location){8, 6, 5});
+    addVertexToShape(&square2, (struct location){9, 6, 5});
+
+    addConnectionToShape(&square2, 0, 1);
+    addConnectionToShape(&square2, 1, 3);
+    addConnectionToShape(&square2, 2, 0);
+    addConnectionToShape(&square2, 3, 2);
+
+    shapes[numShapes] = &square1;
+    numShapes++;
+
+    shapes[numShapes] = &square2;
+    numShapes++;
+
+
     for (;;)
     {
         
-
         char input;
         scanf(" %c", &input);
-
         system("clear");
+
+        //input = 'e';
 
 
         switch (input)
         {
             case 'a':
-                moveShapeLeft(matB, numels);
+                moveShapeLeft(&square1);
                 break;
             case 'd':
-                moveShapeRight(matB, numels);
+                moveShapeRight(&square1);
                 break;
             case 'w':
-                moveShapeUp(matB, numels);
+                moveShapeUp(&square1);
                 break;
             case 's':
-                moveShapeDown(matB, numels);
+                moveShapeDown(&square1);
                 break;
             case 'r':
-                moveShapeOut(matB, numels);
+                moveShapeOut(&square1);
                 break;
             case 'f':
-                moveShapeIn(matB, numels);
+                moveShapeIn(&square1);
                 break;
             case 'q':
-                //rotateShapeCW(matB, numels);
+                rotateShapeCW(&square1, center);
                 break;
             case 'e':
-                float result[numels][4];
-                rotateShapeCCW(matB, result, numels, 1.5, 1.5, 9);
-                copyMatrix(result, matB, numels);
+                rotateShapeCCW(&square1, center);
                 break;
         }
 
-        matMatMult(projMat, matB, results, numels);
-        scaleHomogenous(results, numels);
-
-        printMat(results, numels);
 
         printf("\n");
+        
 
-        displayVertices(results, connectivity, numels);
-        
-        counter++;
-        
-        usleep(100000);
+        matMatMult(projMat, square1.vectors, square1.numVertices);
+        scaleHomogenous(&square1);
+
+        printMat(square1.vectors, square1.numVertices);
+        displayVertices(shapes, numShapes);
+
+
+        usleep(50000);
     }
 
     return 0;
